@@ -1,15 +1,19 @@
 import streamlit as st
 import yfinance as yf
 import requests
-
 from dotenv import load_dotenv
 import os
 
 # Load environment variables from .env file
-load_dotenv()
+load_dotenv("key.env")
 
 
+# Get API key from .env file
 API_KEY = os.getenv("API_KEY")
+
+if not API_KEY:
+    st.error("API key not found. Please check your key.env file.")
+    st.stop()
 
 st.set_page_config(page_title="🌍 Global Stock Tracker", layout="centered")
 st.title("📈 Global Stock Price Tracker")
@@ -57,19 +61,25 @@ st.info(f"Example tickers for {region}: {', '.join(region_tickers[region])}")
 query = st.text_input("🔍 Search Company Name (e.g., Tesla, Infosys, Toyota):")
 ticker = None
 
+# Fetch the company information based on the search query
 if query:
     response = requests.get(
         f"https://financialmodelingprep.com/api/v3/search?query={query}&limit=5&apikey={API_KEY}"
     )
+
+   
+    
+
     results = response.json()
 
     if results:
-        # Filter results to match valid exchange suffixes for the selected region
+        # Filter results based on region suffix
         filtered_results = [
             f"{r['name']} ({r['symbol']})"
             for r in results if any(r['symbol'].endswith(suffix) for suffix in valid_suffixes[region])
         ]
-        
+
+        # Let the user select a company from the filtered results
         if filtered_results:
             selected = st.selectbox("Select company:", filtered_results)
             ticker = selected.split('(')[-1].strip(')')
@@ -77,11 +87,11 @@ if query:
             st.warning(f"No results found for {region} tickers.")
     else:
         st.warning("No results found.")
-
+    
 # Time range
 period = st.selectbox("Select Time Range:", ["5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "ytd", "max"], index=1)
 
-# Fetch & display stock data
+# Fetch & display stock data if ticker is set
 if ticker:
     try:
         stock = yf.Ticker(ticker)
