@@ -1,2 +1,5 @@
-yfinance
 streamlit
+yfinance
+matplotlib
+python-dotenv
+requests
